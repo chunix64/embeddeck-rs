@@ -1,6 +1,6 @@
+use embassy_time::Delay;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_hal::{
-    delay::Delay,
     gpio::{Level, Output, OutputConfig},
     spi::master::{AnySpi, Spi},
 };

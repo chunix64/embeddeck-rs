@@ -10,17 +10,21 @@ path = "./src/main.rs"
 
 [dependencies]
 esp-hal = { version = "~1.1.1", features = ["esp32", "unstable"] }
-
-
+embedded-hal-async = "1.0.0"
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32"] }
+esp-rtos = { version = "0.3.0", features = ["esp32", "embassy"] }
+embassy-executor = "0.10.0"
+embassy-time = "0.5.1"
 
-critical-section = "1.2.0"
-esp-println = { version = "0.17.0", features = ["esp32", "log-04"] }
-log = "0.4.29"
-mipidsi = {git = "https://github.com/chunix64/mipidsi"}
 embedded-hal = "1.0.0"
 embedded-hal-bus = "0.3.0"
 embedded-graphics = "0.8.2"
+critical-section = "1.2.0"
+
+esp-println = { version = "0.17.0", features = ["esp32", "log-04"] }
+log = "0.4.29"
+
+mipidsi = {git = "https://github.com/chunix64/mipidsi"}
 
 
 # For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html

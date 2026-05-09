@@ -47,7 +47,7 @@ impl<'a> Backlight<'a> {
         }
     }
 
-    pub fn get_backlight_controller(&mut self) -> BacklightController<'_> {
+    pub fn get_controller(&mut self) -> BacklightController<'_> {
         let mut channel0 = self.ledc.channel(
             channel::Number::Channel0,
             self.backlight_pin.take().unwrap(),

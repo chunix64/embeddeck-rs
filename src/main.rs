@@ -4,7 +4,8 @@
 #![deny(clippy::large_stack_frames)]
 
 #[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
+fn panic(panic_info: &core::panic::PanicInfo) -> ! {
+    log::info!("[PANIC] {}", panic_info);
     loop {}
 }
 
@@ -18,7 +19,7 @@ mod board;
 mod config;
 mod display;
 
-use esp_hal::main;
+use embassy_executor::Spawner;
 
 use crate::app::App;
 use crate::backlight::ledc::Backlight;
@@ -27,8 +28,8 @@ use crate::config::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins}
 use crate::display::spi_display::SpiDisplayBuilder;
 
 #[allow(clippy::large_stack_frames)]
-#[main]
-fn main() -> ! {
+#[esp_rtos::main]
+async fn main(spawner: Spawner) -> ! {
     let board = Board::init();
     board.reserve_pins();
 
@@ -58,21 +59,23 @@ fn main() -> ! {
 
     let display_model = mipidsi::models::ST7789;
 
+    let mut display_buffer = [0u8; 2048];
+
     // Main logic
+    let _ = spawner;
     let mut delay = board.delay;
-    let mut buffer = [0u8; 2048];
 
     let mut backlight = Backlight::new(app_peripherals.ledc, backlight_config);
-    let backlight_controller = backlight.get_backlight_controller();
+    let backlight_controller = backlight.get_controller();
 
-    let mut display = SpiDisplayBuilder::build(
+    let display = SpiDisplayBuilder::build(
         app_peripherals.spi,
         display_config,
         display_model,
         &mut delay,
-        &mut buffer,
+        &mut display_buffer,
     );
 
-    let mut app = App::new(&mut display, Some(backlight_controller), delay);
-    app.run();
+    let mut app = App::new(display, Some(backlight_controller), delay);
+    app.run().await;
 }

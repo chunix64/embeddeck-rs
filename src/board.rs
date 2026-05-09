@@ -1,4 +1,5 @@
-use esp_hal::{clock::CpuClock, delay::Delay, peripherals::Peripherals};
+use embassy_time::Delay;
+use esp_hal::{clock::CpuClock, peripherals::Peripherals};
 
 pub struct Board {
     pub peripherals: Peripherals,
@@ -14,7 +15,7 @@ impl Board {
 
         Self {
             peripherals,
-            delay: Delay::new(),
+            delay: Delay,
         }
     }
 
