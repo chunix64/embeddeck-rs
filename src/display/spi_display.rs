@@ -4,7 +4,7 @@ use esp_hal::{
     gpio::{Level, Output, OutputConfig},
     spi::master::{AnySpi, Spi},
 };
-use mipidsi::interface::SpiInterface;
+use mipidsi::{interface::SpiInterface, options::Rotation};
 
 use crate::config::DisplayConfig;
 
@@ -22,7 +22,7 @@ impl<'a> SpiDisplayBuilder {
         display_config: DisplayConfig,
         model: M,
         delay: &mut Delay,
-        buffer: &'a mut [u8],
+        buffer: &'static mut [u8],
     ) -> SpiDisplay<'a, M>
     where
         M: mipidsi::models::Model,
@@ -54,6 +54,7 @@ impl<'a> SpiDisplayBuilder {
 
         mipidsi::Builder::new(model, spi_device)
             .display_size(display_config.display_width, display_config.display_height)
+            .orientation(mipidsi::options::Orientation::default().rotate(Rotation::Deg0))
             .reset_pin(rst)
             .init(delay)
             .unwrap()

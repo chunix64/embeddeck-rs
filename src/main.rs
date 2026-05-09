@@ -13,19 +13,20 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 // -----------
 
-mod app;
 mod backlight;
 mod board;
 mod config;
 mod display;
+mod ui;
 
 use embassy_executor::Spawner;
 
-use crate::app::App;
 use crate::backlight::ledc::Backlight;
 use crate::board::Board;
 use crate::config::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins};
+use crate::display::display_controller::DisplayController;
 use crate::display::spi_display::SpiDisplayBuilder;
+use crate::ui::app::App;
 
 #[allow(clippy::large_stack_frames)]
 #[esp_rtos::main]
@@ -60,10 +61,12 @@ async fn main(spawner: Spawner) -> ! {
 
     let display_model = mipidsi::models::ST7789;
 
-    let mut display_buffer = [0u8; 2048];
+    let display_buffer: &'static mut [u8; 2048] = {
+        static mut DISPLAY_BUFFER: [u8; 2048] = [0u8; 2048];
+        unsafe { &mut *core::ptr::addr_of_mut!(DISPLAY_BUFFER) }
+    };
 
     // Main logic
-    let _ = spawner;
     let mut delay = board.delay;
 
     let mut backlight = Backlight::new(app_peripherals.ledc, backlight_config);
@@ -74,9 +77,10 @@ async fn main(spawner: Spawner) -> ! {
         display_config,
         display_model,
         &mut delay,
-        &mut display_buffer,
+        display_buffer,
     );
+    let display_controller = DisplayController::new(display, Some(backlight_controller));
 
-    let mut app = App::new(display, Some(backlight_controller), delay);
-    app.run().await;
+    let mut app = App::new(display_controller, delay);
+    app.run(spawner).await;
 }

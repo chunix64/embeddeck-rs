@@ -15,7 +15,7 @@ impl Board {
     pub fn init() -> Self {
         let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
         let peripherals = esp_hal::init(config);
-        esp_alloc::heap_allocator!(size: 32 * 1024);
+        esp_alloc::heap_allocator!(size: 128 * 1024);
 
         esp_println::logger::init_logger_from_env();
 
