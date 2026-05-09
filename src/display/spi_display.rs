@@ -2,11 +2,11 @@ use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_hal::{
     delay::Delay,
     gpio::{Level, Output, OutputConfig},
-    spi::master::Spi,
+    spi::master::{AnySpi, Spi},
 };
 use mipidsi::interface::SpiInterface;
 
-use crate::config::{AppPins, DisplayConfig};
+use crate::config::DisplayConfig;
 
 pub struct SpiDisplayBuilder;
 
@@ -18,8 +18,9 @@ type SpiDisplay<'a, M> = mipidsi::Display<
 
 impl<'a> SpiDisplayBuilder {
     pub fn build<M>(
-        app_pins: &mut AppPins,
-        display_config: &mut DisplayConfig<M>,
+        spi_peripheral: AnySpi<'a>,
+        display_config: DisplayConfig,
+        model: M,
         delay: &mut Delay,
         buffer: &'a mut [u8],
     ) -> SpiDisplay<'a, M>
@@ -27,66 +28,34 @@ impl<'a> SpiDisplayBuilder {
         M: mipidsi::models::Model,
         M::ColorFormat: mipidsi::interface::InterfacePixelFormat<u8>,
     {
-        let rst = Output::new(
-            display_config.pins.rst.take().unwrap(),
-            Level::Low,
-            OutputConfig::default(),
-        );
+        let rst = Output::new(display_config.pins.rst, Level::Low, OutputConfig::default());
 
-        let spi_device = Self::init_spi_device(app_pins, display_config, buffer);
-
-        mipidsi::Builder::new(display_config.display_model.take().unwrap(), spi_device)
-            .display_size(display_config.display_width, display_config.display_height)
-            .reset_pin(rst)
-            .init(delay)
-            .unwrap()
-    }
-
-    fn init_spi_device<M>(
-        app_pins: &mut AppPins,
-        display_config: &mut DisplayConfig<M>,
-        buffer: &'a mut [u8],
-    ) -> SpiInterface<
-        'a,
-        ExclusiveDevice<Spi<'a, esp_hal::Blocking>, Output<'a>, NoDelay>,
-        Output<'a>,
-    >
-    where
-        M: mipidsi::models::Model,
-        M::ColorFormat: mipidsi::interface::InterfacePixelFormat<u8>,
-    {
-        let sck = Output::new(
-            display_config.pins.sck.take().unwrap(),
-            Level::Low,
-            OutputConfig::default(),
-        );
+        let sck = Output::new(display_config.pins.sck, Level::Low, OutputConfig::default());
         let mosi = Output::new(
-            display_config.pins.mosi.take().unwrap(),
+            display_config.pins.mosi,
             Level::Low,
             OutputConfig::default(),
         );
-        let cs = Output::new(
-            display_config.pins.cs.take().unwrap(),
-            Level::Low,
-            OutputConfig::default(),
-        );
-        let dc = Output::new(
-            display_config.pins.dc.take().unwrap(),
-            Level::Low,
-            OutputConfig::default(),
-        );
+        let cs = Output::new(display_config.pins.cs, Level::Low, OutputConfig::default());
+        let dc = Output::new(display_config.pins.dc, Level::Low, OutputConfig::default());
 
         let spi_config = esp_hal::spi::master::Config::default()
             .with_mode(esp_hal::spi::Mode::_3)
             .with_frequency(esp_hal::time::Rate::from_mhz(80));
 
-        let spi = Spi::new(app_pins.spi.take().unwrap(), spi_config)
+        let spi = Spi::new(spi_peripheral, spi_config)
             .unwrap()
             .with_sck(sck)
             .with_mosi(mosi);
 
         let spi_bus = embedded_hal_bus::spi::ExclusiveDevice::new_no_delay(spi, cs).unwrap();
 
-        SpiInterface::new(spi_bus, dc, buffer)
+        let spi_device = SpiInterface::new(spi_bus, dc, buffer);
+
+        mipidsi::Builder::new(model, spi_device)
+            .display_size(display_config.display_width, display_config.display_height)
+            .reset_pin(rst)
+            .init(delay)
+            .unwrap()
     }
 }

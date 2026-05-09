@@ -6,10 +6,11 @@ use esp_hal::{
         channel::{self, ChannelIFace},
         timer::{self, Timer, TimerIFace},
     },
+    peripherals::LEDC,
     time::Rate,
 };
 
-use crate::config::{AppPins, DisplayPins};
+use crate::config::BacklightConfig;
 
 pub struct Backlight<'a> {
     backlight_pin: Option<AnyPin<'static>>,
@@ -25,8 +26,8 @@ pub struct BacklightController<'a> {
 }
 
 impl<'a> Backlight<'a> {
-    pub fn new(app_pins: &mut AppPins, display_pins: &mut DisplayPins) -> Self {
-        let mut ledc = Ledc::new(app_pins.ledc.take().unwrap());
+    pub fn new(ledc_peripheral: LEDC<'a>, backlight_config: BacklightConfig) -> Self {
+        let mut ledc = Ledc::new(ledc_peripheral);
         ledc.set_global_slow_clock(esp_hal::ledc::LSGlobalClkSource::APBClk);
 
         let mut timer = ledc.timer(timer::Number::Timer0);
@@ -40,7 +41,7 @@ impl<'a> Backlight<'a> {
             .unwrap();
 
         Self {
-            backlight_pin: Some(display_pins.backlight.take().unwrap()),
+            backlight_pin: Some(backlight_config.pin),
             timer,
             ledc,
         }

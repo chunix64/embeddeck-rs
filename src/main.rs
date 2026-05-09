@@ -23,7 +23,7 @@ use esp_hal::main;
 use crate::app::App;
 use crate::backlight::ledc::Backlight;
 use crate::board::Board;
-use crate::config::{AppPins, DisplayConfig, DisplayPins};
+use crate::config::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins};
 use crate::display::spi_display::SpiDisplayBuilder;
 
 #[allow(clippy::large_stack_frames)]
@@ -33,35 +33,45 @@ fn main() -> ! {
     board.reserve_pins();
 
     // Config
-    let mut app_pins = AppPins {
-        ledc: Some(board.peripherals.LEDC),
-        spi: Some(board.peripherals.SPI2.into()),
+    let app_peripherals = AppPeripherals {
+        ledc: board.peripherals.LEDC,
+        spi: board.peripherals.SPI2.into(),
     };
 
     let display_pins = DisplayPins {
-        sck: Some(board.peripherals.GPIO18.into()),
-        mosi: Some(board.peripherals.GPIO23.into()),
-        dc: Some(board.peripherals.GPIO2.into()),
-        cs: Some(board.peripherals.GPIO5.into()),
-        rst: Some(board.peripherals.GPIO4.into()),
-        backlight: Some(board.peripherals.GPIO14.into()),
+        sck: board.peripherals.GPIO18.into(),
+        mosi: board.peripherals.GPIO23.into(),
+        dc: board.peripherals.GPIO2.into(),
+        cs: board.peripherals.GPIO5.into(),
+        rst: board.peripherals.GPIO4.into(),
     };
 
-    let mut display_config = DisplayConfig {
-        display_model: Some(mipidsi::models::ST7789),
+    let display_config = DisplayConfig {
         display_width: 240,
         display_height: 320,
         pins: display_pins,
     };
 
+    let backlight_config = BacklightConfig {
+        pin: board.peripherals.GPIO14.into(),
+    };
+
+    let display_model = mipidsi::models::ST7789;
+
     // Main logic
     let mut delay = board.delay;
     let mut buffer = [0u8; 2048];
 
-    let mut display =
-        SpiDisplayBuilder::build(&mut app_pins, &mut display_config, &mut delay, &mut buffer);
-    let mut backlight = Backlight::new(&mut app_pins, &mut display_config.pins);
+    let mut backlight = Backlight::new(app_peripherals.ledc, backlight_config);
     let backlight_controller = backlight.get_backlight_controller();
+
+    let mut display = SpiDisplayBuilder::build(
+        app_peripherals.spi,
+        display_config,
+        display_model,
+        &mut delay,
+        &mut buffer,
+    );
 
     let mut app = App::new(&mut display, Some(backlight_controller), delay);
     app.run();
