@@ -13,7 +13,6 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 // -----------
 
-mod actors;
 mod app;
 mod backlight;
 mod board;
@@ -68,19 +67,12 @@ async fn main(spawner: Spawner) -> ! {
     };
 
     // Main logic
-    let mut delay = board.delay;
-
     let mut backlight = Backlight::new(app_peripherals.ledc, backlight_config);
     let backlight_controller = backlight.get_controller();
 
-    let display = SpiDisplayBuilder::build(
-        app_peripherals.spi,
-        display_config,
-        &mut delay,
-        display_buffer,
-    );
+    let display = SpiDisplayBuilder::build(app_peripherals.spi, display_config, display_buffer);
     let display_controller = DisplayController::new(display, Some(backlight_controller));
 
-    let mut app = App::new(display_controller, delay);
+    let mut app = App::new(display_controller);
     app.run(spawner).await;
 }

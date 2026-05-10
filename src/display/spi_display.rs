@@ -20,7 +20,6 @@ impl<'a> SpiDisplayBuilder {
     pub fn build<M>(
         spi_peripheral: AnySpi<'a>,
         display_config: DisplayConfig<M>,
-        delay: &mut Delay,
         buffer: &'static mut [u8],
     ) -> SpiDisplay<'a, M>
     where
@@ -55,7 +54,7 @@ impl<'a> SpiDisplayBuilder {
             .display_size(display_config.display_width, display_config.display_height)
             .orientation(mipidsi::options::Orientation::default().rotate(Rotation::Deg0))
             .reset_pin(rst)
-            .init(delay)
+            .init(&mut Delay)
             .unwrap()
     }
 }

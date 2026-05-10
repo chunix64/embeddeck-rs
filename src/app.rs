@@ -9,7 +9,7 @@ use mipidsi::{
 use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
 use ratatui::Terminal;
 
-use crate::{actors::ui::ui_task, display::display_controller::DisplayController};
+use crate::{display::display_controller::DisplayController, ui::actor::UIActor};
 
 pub struct App<'a, DI, MODEL, RST>
 where
@@ -19,7 +19,6 @@ where
     RST: OutputPin + 'static,
 {
     display: DisplayController<'a, DI, MODEL, RST>,
-    delay: Delay,
 }
 
 #[allow(clippy::large_stack_frames)]
@@ -31,21 +30,23 @@ where
     MODEL: Model<ColorFormat = embedded_graphics::pixelcolor::Rgb565>,
     RST: OutputPin + 'static,
 {
-    pub fn new(display: DisplayController<'a, DI, MODEL, RST>, delay: Delay) -> Self {
-        Self { display, delay }
+    pub fn new(display: DisplayController<'a, DI, MODEL, RST>) -> Self {
+        Self { display }
     }
 
     pub async fn run(&mut self, spawner: Spawner) -> ! {
         // TODO: Refactor with embassy_executor later
         let _ = spawner;
         self.display.init();
-
         let backend =
             EmbeddedBackend::new(self.display.raw_display(), EmbeddedBackendConfig::default());
-        let mut terminal = Terminal::new(backend).unwrap();
+        let terminal = Terminal::new(backend).unwrap();
+
+        let mut ui_actor = UIActor::new(terminal);
+
         loop {
-            ui_task(&mut terminal, &mut self.delay).await;
-            self.delay.delay_ms(500).await;
+            ui_actor.run().await;
+            Delay.delay_ms(500);
         }
     }
 }

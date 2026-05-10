@@ -1,4 +1,3 @@
-use embassy_time::Delay;
 use esp_hal::{
     clock::CpuClock,
     interrupt::software::SoftwareInterruptControl,
@@ -8,7 +7,6 @@ use esp_hal::{
 
 pub struct Board {
     pub peripherals: Peripherals,
-    pub delay: Delay,
 }
 
 impl Board {
@@ -19,10 +17,7 @@ impl Board {
 
         esp_println::logger::init_logger_from_env();
 
-        Self {
-            peripherals,
-            delay: Delay,
-        }
+        Self { peripherals }
     }
 
     pub fn start_rtos<T>(timer_group: T, sw_interrupt: SW_INTERRUPT<'static>)
