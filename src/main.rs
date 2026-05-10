@@ -42,11 +42,7 @@ async fn main(spawner: Spawner) -> ! {
     board.reserve_pins();
     Board::start_rtos(board.peripherals.TIMG0, board.peripherals.SW_INTERRUPT);
     let clock = CLOCK.init(Clock::default());
-    let clock_ptr = clock as *mut Clock;
-
     spawner.spawn(timer_task(clock).unwrap());
-
-    let clock_read: &'static Clock = unsafe { &*clock_ptr };
 
     // Config
     let app_peripherals = AppPeripherals {
@@ -85,6 +81,6 @@ async fn main(spawner: Spawner) -> ! {
     let display = SpiDisplayBuilder::build(app_peripherals.spi, display_config, display_buffer);
     let display_controller = DisplayController::new(display, Some(backlight_controller));
 
-    let mut app = App::new(display_controller, clock_read);
+    let mut app = App::new(display_controller, clock);
     app.run(spawner).await;
 }

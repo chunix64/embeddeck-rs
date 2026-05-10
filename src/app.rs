@@ -48,7 +48,7 @@ where
             EmbeddedBackend::new(self.display.raw_display(), EmbeddedBackendConfig::default());
         let terminal = Terminal::new(backend).unwrap();
 
-        let mut ui_actor = UIActor::new(terminal, &self.clock);
+        let mut ui_actor = UIActor::new(terminal, self.clock);
 
         loop {
             ui_actor.run().await;

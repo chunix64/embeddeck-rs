@@ -16,16 +16,20 @@ where
     }
 
     pub async fn run(&mut self) {
-        self.draw();
+        self.draw().await;
     }
 
-    fn draw(&mut self) {
+    async fn draw(&mut self) {
+        let hour = self.clock.hour().await;
+        let minute = self.clock.minute().await;
+        let second = self.clock.second().await;
+
         self.terminal
             .draw(|frame| {
                 let area = frame.area();
                 let buf = frame.buffer_mut();
 
-                DefaultUI::draw(area, buf, self.clock);
+                DefaultUI::draw(area, buf, hour, minute, second);
             })
             .unwrap();
     }
