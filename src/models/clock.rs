@@ -1,20 +1,19 @@
 use chrono::{DateTime, TimeZone, Timelike};
 use chrono_tz::Tz;
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
+use esp_hal::time::Instant;
 
-struct ClockInner {
-    now: DateTime<Tz>,
+pub struct Clock {
+    base_time: DateTime<Tz>,
+    base_instant: Instant,
     time_zone: Tz,
 }
 
-pub struct Clock {
-    inner: Mutex<CriticalSectionRawMutex, ClockInner>,
-}
-
 impl Clock {
-    pub fn new(now: DateTime<Tz>, time_zone: Tz) -> Self {
+    pub fn new(base_time: DateTime<Tz>, time_zone: Tz) -> Self {
         Self {
-            inner: Mutex::new(ClockInner { now, time_zone }),
+            base_time,
+            base_instant: Instant::now(),
+            time_zone,
         }
     }
 
@@ -26,25 +25,21 @@ impl Clock {
         Self::new(default_date, time_zone)
     }
 
-    pub async fn now(&self) -> DateTime<Tz> {
-        let inner = self.inner.lock().await;
-        inner.now.with_timezone(&inner.time_zone)
+    pub fn now(&self) -> DateTime<Tz> {
+        let elapsed = Instant::now() - self.base_instant;
+        let elapsed_chrono = chrono::TimeDelta::microseconds(elapsed.as_micros() as i64);
+        (self.base_time + elapsed_chrono).with_timezone(&self.time_zone)
     }
 
-    pub async fn hour(&self) -> u32 {
-        self.now().await.hour()
+    pub fn hour(&self) -> u32 {
+        self.now().hour()
     }
 
-    pub async fn minute(&self) -> u32 {
-        self.now().await.minute()
+    pub fn minute(&self) -> u32 {
+        self.now().minute()
     }
 
-    pub async fn second(&self) -> u32 {
-        self.now().await.second()
-    }
-
-    pub async fn set_time(&self, new_time: DateTime<Tz>) {
-        let mut inner = self.inner.lock().await;
-        inner.now = new_time;
+    pub fn second(&self) -> u32 {
+        self.now().second()
     }
 }

@@ -22,7 +22,6 @@ mod models;
 mod ui;
 
 use embassy_executor::Spawner;
-use static_cell::StaticCell;
 
 use crate::app::App;
 use crate::config::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins};
@@ -30,10 +29,7 @@ use crate::hardware::backlight::ledc::Backlight;
 use crate::hardware::board::Board;
 use crate::hardware::display::display_controller::DisplayController;
 use crate::hardware::display::spi_display::SpiDisplayBuilder;
-use crate::hardware::timer::system_timer::timer_task;
 use crate::models::clock::Clock;
-
-static CLOCK: StaticCell<Clock> = StaticCell::new();
 
 #[allow(clippy::large_stack_frames)]
 #[esp_rtos::main]
@@ -41,8 +37,7 @@ async fn main(spawner: Spawner) -> ! {
     let board = Board::init();
     board.reserve_pins();
     Board::start_rtos(board.peripherals.TIMG0, board.peripherals.SW_INTERRUPT);
-    let clock = CLOCK.init(Clock::default());
-    spawner.spawn(timer_task(clock).unwrap());
+    let clock = Clock::default();
 
     // Config
     let app_peripherals = AppPeripherals {
@@ -81,6 +76,6 @@ async fn main(spawner: Spawner) -> ! {
     let display = SpiDisplayBuilder::build(app_peripherals.spi, display_config, display_buffer);
     let display_controller = DisplayController::new(display, Some(backlight_controller));
 
-    let mut app = App::new(display_controller, clock);
+    let mut app = App::new(display_controller, &clock);
     app.run(spawner).await;
 }

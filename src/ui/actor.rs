@@ -15,21 +15,17 @@ where
         Self { terminal, clock }
     }
 
-    pub async fn run(&mut self) {
-        self.draw().await;
+    pub fn run(&mut self) {
+        self.draw();
     }
 
-    async fn draw(&mut self) {
-        let hour = self.clock.hour().await;
-        let minute = self.clock.minute().await;
-        let second = self.clock.second().await;
-
+    fn draw(&mut self) {
         self.terminal
             .draw(|frame| {
                 let area = frame.area();
                 let buf = frame.buffer_mut();
 
-                DefaultUI::draw(area, buf, hour, minute, second);
+                DefaultUI::draw(area, buf, &self.clock);
             })
             .unwrap();
     }

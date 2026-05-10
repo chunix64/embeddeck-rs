@@ -7,16 +7,23 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 
+use crate::models::clock::Clock;
+
 pub struct DefaultUI;
 
 impl DefaultUI {
-    pub fn draw(area: Rect, buf: &mut Buffer, hour: u32, minute: u32, second: u32) {
+    pub fn draw(area: Rect, buf: &mut Buffer, clock: &Clock) {
         let title = Line::from("ESP Clock".bold());
         let block = Block::bordered()
             .title(title)
             .border_set(ratatui::symbols::border::THICK);
 
-        let clock_text = format!("{:02}:{:02}:{:02}", hour, minute, second);
+        let clock_text = format!(
+            "{:02}:{:02}:{:02}",
+            clock.hour(),
+            clock.minute(),
+            clock.second()
+        );
 
         let clock = Paragraph::new(clock_text)
             .style(Style::default().bold())

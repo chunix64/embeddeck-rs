@@ -22,7 +22,7 @@ where
     RST: OutputPin + 'static,
 {
     display: DisplayController<'a, DI, MODEL, RST>,
-    clock: &'static Clock,
+    clock: &'a Clock,
 }
 
 #[allow(clippy::large_stack_frames)]
@@ -34,7 +34,7 @@ where
     MODEL: Model<ColorFormat = embedded_graphics::pixelcolor::Rgb565>,
     RST: OutputPin + 'static,
 {
-    pub fn new(display: DisplayController<'a, DI, MODEL, RST>, clock: &'static Clock) -> Self {
+    pub fn new(display: DisplayController<'a, DI, MODEL, RST>, clock: &'a Clock) -> Self {
         Self { display, clock }
     }
 
@@ -51,7 +51,7 @@ where
         let mut ui_actor = UIActor::new(terminal, self.clock);
 
         loop {
-            ui_actor.run().await;
+            ui_actor.run();
             Delay.delay_ms(500).await;
         }
     }
