@@ -1,4 +1,3 @@
-use chrono::{TimeZone, Utc};
 use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal::digital::OutputPin;
@@ -36,12 +35,10 @@ where
     RST: OutputPin + 'static,
 {
     pub fn new(display: DisplayController<'a, DI, MODEL, RST>) -> Self {
-        // Suggest: use release date for each version as default_date
-        let default_date = Utc.with_ymd_and_hms(2026, 5, 10, 12, 0, 0).unwrap();
-        let time_zone = chrono_tz::UTC;
-        let clock = Clock::new(default_date, time_zone);
-
-        Self { display, clock }
+        Self {
+            display,
+            clock: Clock::default(),
+        }
     }
 
     pub async fn run(&mut self, spawner: Spawner) -> ! {

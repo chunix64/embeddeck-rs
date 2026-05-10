@@ -677,7 +677,6 @@ dependencies = [
  "chrono-tz",
  "critical-section",
  "embassy-executor",
- "embassy-sync 0.8.0",
  "embassy-time",
  "embedded-graphics",
  "embedded-hal 1.0.0",
@@ -1227,7 +1226,8 @@ checksum = "c3c8dda44ff03a2f238717214da50f65d5a53b45cd213a7370424ffdb6fae815"
 [[package]]
 name = "mipidsi"
 version = "0.10.0"
-source = "git+https://github.com/chunix64/mipidsi#b2af46083a0b2f0dda7316e1096243519d9a509c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "790ebd28bd67addbccf41b1c0c188c26bb9f5bdcd91d4d6da9bd558e20d97a1d"
 dependencies = [
  "embedded-graphics-core",
  "embedded-hal 1.0.0",
