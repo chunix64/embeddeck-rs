@@ -39,7 +39,7 @@ where
     }
 
     pub async fn run(&mut self, spawner: Spawner) -> ! {
-        // TODO: Need refactor to use embassy_executor::task for unfixed screen
+        // TODO: Need refactor to use embassy_executor::task for actors
         let _ = spawner;
         self.display.init();
         self.display.rotate_landscape();

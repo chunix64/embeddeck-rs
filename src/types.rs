@@ -1,9 +1,15 @@
-use esp_hal::{gpio::AnyPin, peripherals::LEDC, spi::master::AnySpi};
+use esp_hal::{
+    gpio::AnyPin,
+    peripherals::{LEDC, WIFI},
+    spi::master::AnySpi,
+};
 use mipidsi::models::Model;
 
+// Configs
 pub struct AppPeripherals {
     pub ledc: LEDC<'static>,
     pub spi: AnySpi<'static>,
+    pub wifi: WIFI<'static>,
 }
 
 pub struct DisplayPins {
@@ -24,3 +30,10 @@ pub struct DisplayConfig<M: Model> {
     pub display_height: u16,
     pub pins: DisplayPins,
 }
+
+pub struct WifiConfig {
+    pub ssid: heapless::String<32>,
+    pub password: heapless::String<32>,
+}
+
+// Shared structs
