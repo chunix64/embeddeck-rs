@@ -42,7 +42,7 @@ static WIFI_CONTROLLER: StaticCell<WifiController<'static>> = StaticCell::new();
 static RTC: StaticCell<Rtc<'static>> = StaticCell::new();
 
 const DISPLAY_BUFFER_SIZE: usize = 2048;
-static mut DISPLAY_BUFFER: [u8; DISPLAY_BUFFER_SIZE] = [0u8; DISPLAY_BUFFER_SIZE];
+static DISPLAY_BUFFER: StaticCell<[u8; DISPLAY_BUFFER_SIZE]> = StaticCell::new();
 
 //
 // Pin assignments and peripheral configuration can be changed in src/hardware/board.rs
@@ -62,7 +62,7 @@ async fn main(spawner: Spawner) -> ! {
         WIFI_CONTROLLER.init(wifi_controller_inner);
     let (network_stack, network_runner) = init_network_stack(wifi_interfaces.station, &rng);
     let display_buffer: &'static mut [u8; DISPLAY_BUFFER_SIZE] =
-        unsafe { &mut *core::ptr::addr_of_mut!(DISPLAY_BUFFER) };
+        DISPLAY_BUFFER.init([0u8; DISPLAY_BUFFER_SIZE]);
 
     // Wifi configs
     let wifi_config = WifiConfig {
@@ -70,7 +70,7 @@ async fn main(spawner: Spawner) -> ! {
         password: heapless::String::try_from("YOUR_SSID_PASSWORD").unwrap(),
     };
 
-    // Spawning
+    // Spawning hardware jobs and services
     spawner.spawn(wifi_task(wifi_controller, wifi_config).unwrap());
     spawner.spawn(embassy_net_task(network_runner).unwrap());
     spawner.spawn(ntp_task(network_stack, rtc).unwrap());
