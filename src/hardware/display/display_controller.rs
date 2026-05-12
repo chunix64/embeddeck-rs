@@ -2,38 +2,17 @@ use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::{DrawTarget, RgbColor},
 };
-use embedded_hal::digital::OutputPin;
-use mipidsi::{
-    interface::{Interface, InterfacePixelFormat},
-    models::Model,
-    options::{Orientation, Rotation},
-};
+use mipidsi::options::{Orientation, Rotation};
 
-use crate::hardware::backlight::ledc::BacklightController;
+use crate::hardware::{backlight::ledc::BacklightController, display::types::ConcreteDisplay};
 
-pub struct DisplayController<'a, DI, MODEL, RST>
-where
-    DI: Interface + 'static,
-    MODEL: Model + 'static,
-    MODEL::ColorFormat: InterfacePixelFormat<DI::Word>,
-    RST: OutputPin + 'static,
-{
-    display: mipidsi::Display<DI, MODEL, RST>,
-    backlight: Option<BacklightController<'a>>,
+pub struct DisplayController {
+    display: ConcreteDisplay,
+    backlight: Option<BacklightController<'static>>,
 }
 
-impl<'a, DI, MODEL, RST> DisplayController<'a, DI, MODEL, RST>
-where
-    DI: Interface + 'static,
-    MODEL: Model + 'static,
-    MODEL::ColorFormat: InterfacePixelFormat<DI::Word>,
-    MODEL: Model<ColorFormat = embedded_graphics::pixelcolor::Rgb565>,
-    RST: OutputPin + 'static,
-{
-    pub fn new(
-        display: mipidsi::Display<DI, MODEL, RST>,
-        backlight: Option<BacklightController<'a>>,
-    ) -> Self {
+impl DisplayController {
+    pub fn new(display: ConcreteDisplay, backlight: Option<BacklightController<'static>>) -> Self {
         Self { display, backlight }
     }
 
@@ -43,7 +22,7 @@ where
         self.display.clear(Rgb565::BLACK).unwrap();
     }
 
-    pub fn raw_display(&mut self) -> &mut mipidsi::Display<DI, MODEL, RST> {
+    pub fn raw_display(&mut self) -> &mut ConcreteDisplay {
         &mut self.display
     }
 

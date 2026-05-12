@@ -63,11 +63,11 @@ async fn wifi_handle_connection(
 
 pub fn init_network_stack<'a>(
     station: esp_radio::wifi::Interface<'a>,
-    rng: &Rng,
 ) -> (
     embassy_net::Stack<'a>,
     embassy_net::Runner<'a, esp_radio::wifi::Interface<'a>>,
 ) {
+    let rng = Rng::new();
     let stack_resources = NET_STACK_RESOURCES
         .uninit()
         .write(StackResources::<3>::new());

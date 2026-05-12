@@ -22,12 +22,13 @@ mod services;
 mod ui;
 
 use embassy_executor::Spawner;
-use esp_hal::rng::Rng;
+use embassy_time::Delay;
+use embedded_hal_async::delay::DelayNs;
 use esp_hal::rtc_cntl::Rtc;
 use esp_radio::wifi::WifiController;
 use static_cell::StaticCell;
 
-use crate::app::App;
+use crate::app::app_task;
 use crate::hardware::backlight::ledc::Backlight;
 use crate::hardware::board::Board;
 use crate::hardware::display::display_controller::DisplayController;
@@ -40,9 +41,12 @@ use crate::services::ntp::ntp_task;
 
 static WIFI_CONTROLLER: StaticCell<WifiController<'static>> = StaticCell::new();
 static RTC: StaticCell<Rtc<'static>> = StaticCell::new();
+static CLOCK: StaticCell<Clock> = StaticCell::new();
 
 const DISPLAY_BUFFER_SIZE: usize = 2048;
 static DISPLAY_BUFFER: StaticCell<[u8; DISPLAY_BUFFER_SIZE]> = StaticCell::new();
+static DISPLAY_CONTROLLER: StaticCell<DisplayController> = StaticCell::new();
+static BACKLIGHT: StaticCell<Backlight> = StaticCell::new();
 
 //
 // Pin assignments and peripheral configuration can be changed in src/hardware/board.rs
@@ -54,15 +58,26 @@ async fn main(spawner: Spawner) -> ! {
     // Initialize
     let board = Board::init();
     let rtc: &'static Rtc<'static> = RTC.init(Rtc::new(board.app_peripherals.lpwr));
-    let clock = Clock::default(rtc);
-    let rng = Rng::new();
+    let clock: &'static Clock = CLOCK.init(Clock::default(rtc));
     let (wifi_controller_inner, wifi_interfaces) =
         esp_radio::wifi::new(board.app_peripherals.wifi, Default::default()).unwrap();
     let wifi_controller: &'static mut WifiController<'static> =
         WIFI_CONTROLLER.init(wifi_controller_inner);
-    let (network_stack, network_runner) = init_network_stack(wifi_interfaces.station, &rng);
+    let (network_stack, network_runner) = init_network_stack(wifi_interfaces.station);
     let display_buffer: &'static mut [u8; DISPLAY_BUFFER_SIZE] =
         DISPLAY_BUFFER.init([0u8; DISPLAY_BUFFER_SIZE]);
+    let backlight: &'static mut Backlight = BACKLIGHT.init(Backlight::new(
+        board.app_peripherals.ledc,
+        board.backlight_config,
+    ));
+    let backlight_controller = backlight.get_controller();
+    let display = SpiDisplayBuilder::build(
+        board.app_peripherals.spi,
+        board.display_config,
+        display_buffer,
+    );
+    let display_controller =
+        DISPLAY_CONTROLLER.init(DisplayController::new(display, Some(backlight_controller)));
 
     // Wifi configs
     let wifi_config = WifiConfig {
@@ -75,17 +90,10 @@ async fn main(spawner: Spawner) -> ! {
     spawner.spawn(embassy_net_task(network_runner).unwrap());
     spawner.spawn(ntp_task(network_stack, rtc).unwrap());
 
-    // -------------
-    let mut backlight = Backlight::new(board.app_peripherals.ledc, board.backlight_config);
-    let backlight_controller = backlight.get_controller();
+    // Spawn app
+    spawner.spawn(app_task(spawner, display_controller, clock).unwrap());
 
-    let display = SpiDisplayBuilder::build(
-        board.app_peripherals.spi,
-        board.display_config,
-        display_buffer,
-    );
-    let display_controller = DisplayController::new(display, Some(backlight_controller));
-
-    let mut app = App::new(display_controller, &clock);
-    app.run(spawner).await;
+    loop {
+        Delay.delay_ms(3600).await;
+    }
 }

@@ -2,13 +2,15 @@ use esp_hal::{
     clock::CpuClock, interrupt::software::SoftwareInterruptControl, peripherals::SW_INTERRUPT, ram,
     timer::timg::TimerGroup,
 };
-use mipidsi::models::ST7789;
 
-use crate::models::configs::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins};
+use crate::{
+    hardware::display::types::{DisplayModel, display_model},
+    models::configs::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins},
+};
 
 pub struct Board {
     pub app_peripherals: AppPeripherals,
-    pub display_config: DisplayConfig<ST7789>,
+    pub display_config: DisplayConfig<DisplayModel>,
     pub backlight_config: BacklightConfig,
 }
 
@@ -61,8 +63,9 @@ impl Board {
             pin: peripherals.GPIO14.into(),
         };
 
+        // Display model config is at src/hardware/display/types.rs
         let display_config = DisplayConfig {
-            display_model: ST7789,
+            display_model: display_model(),
             display_width: 240,
             display_height: 320,
             pins: display_pins,

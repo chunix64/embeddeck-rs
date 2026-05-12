@@ -1,32 +1,30 @@
-use ratatui::{Terminal, backend::Backend};
+use embassy_time::Delay;
+use embedded_hal_async::delay::DelayNs;
+use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
+use ratatui::{Frame, Terminal};
 
-use crate::{models::clock::Clock, ui::screens::default::DefaultUI};
+use crate::{
+    hardware::display::display_controller::DisplayController, models::clock::Clock,
+    ui::screens::default::DefaultUI,
+};
 
-pub struct UIActor<'a, B: Backend> {
-    terminal: Terminal<B>,
-    clock: &'a Clock,
+#[embassy_executor::task]
+pub async fn ui_task(display: &'static mut DisplayController, clock: &'static Clock) {
+    display.init();
+    display.rotate_landscape();
+
+    let backend = EmbeddedBackend::new(display.raw_display(), EmbeddedBackendConfig::default());
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    loop {
+        let _ = terminal.draw(|frame| draw(frame, clock));
+        Delay.delay_ms(1000).await;
+    }
 }
 
-impl<'a, B> UIActor<'a, B>
-where
-    B: Backend,
-{
-    pub fn new(terminal: Terminal<B>, clock: &'a Clock) -> Self {
-        Self { terminal, clock }
-    }
+fn draw(frame: &mut Frame, clock: &'static Clock) {
+    let area = frame.area();
+    let buf = frame.buffer_mut();
 
-    pub fn run(&mut self) {
-        self.draw();
-    }
-
-    fn draw(&mut self) {
-        self.terminal
-            .draw(|frame| {
-                let area = frame.area();
-                let buf = frame.buffer_mut();
-
-                DefaultUI::draw(area, buf, self.clock);
-            })
-            .unwrap();
-    }
+    DefaultUI::draw(area, buf, clock);
 }

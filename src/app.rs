@@ -1,58 +1,21 @@
 use embassy_executor::Spawner;
 use embassy_time::Delay;
-use embedded_hal::digital::OutputPin;
 use embedded_hal_async::delay::DelayNs;
-use mipidsi::{
-    interface::{Interface, InterfacePixelFormat},
-    models::Model,
-};
-use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
-use ratatui::Terminal;
 
 use crate::{
     hardware::display::display_controller::DisplayController, models::clock::Clock,
-    ui::actor::UIActor,
+    ui::actor::ui_task,
 };
 
-pub struct App<'a, DI, MODEL, RST>
-where
-    DI: Interface + 'static,
-    MODEL: Model + 'static,
-    MODEL::ColorFormat: InterfacePixelFormat<DI::Word>,
-    RST: OutputPin + 'static,
-{
-    display: DisplayController<'a, DI, MODEL, RST>,
-    clock: &'a Clock,
-}
+#[embassy_executor::task]
+pub async fn app_task(
+    spawner: Spawner,
+    display: &'static mut DisplayController,
+    clock: &'static Clock,
+) {
+    spawner.spawn(ui_task(display, clock).unwrap());
 
-#[allow(clippy::large_stack_frames)]
-impl<'a, DI, MODEL, RST> App<'a, DI, MODEL, RST>
-where
-    DI: Interface + 'static,
-    MODEL: Model + 'static,
-    MODEL::ColorFormat: InterfacePixelFormat<DI::Word>,
-    MODEL: Model<ColorFormat = embedded_graphics::pixelcolor::Rgb565>,
-    RST: OutputPin + 'static,
-{
-    pub fn new(display: DisplayController<'a, DI, MODEL, RST>, clock: &'a Clock) -> Self {
-        Self { display, clock }
-    }
-
-    pub async fn run(&mut self, spawner: Spawner) -> ! {
-        // TODO: Need refactor to use embassy_executor::task for actors
-        let _ = spawner;
-        self.display.init();
-        self.display.rotate_landscape();
-
-        let backend =
-            EmbeddedBackend::new(self.display.raw_display(), EmbeddedBackendConfig::default());
-        let terminal = Terminal::new(backend).unwrap();
-
-        let mut ui_actor = UIActor::new(terminal, self.clock);
-
-        loop {
-            ui_actor.run();
-            Delay.delay_ms(500).await;
-        }
+    loop {
+        Delay.delay_ms(1000).await;
     }
 }

@@ -1,31 +1,23 @@
 use embassy_time::Delay;
-use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_hal::{
     gpio::{Level, Output, OutputConfig},
     spi::master::{AnySpi, Spi},
 };
 use mipidsi::{interface::SpiInterface, options::Rotation};
 
-use crate::models::configs::DisplayConfig;
+use crate::{
+    hardware::display::types::{ConcreteDisplay, DisplayModel},
+    models::configs::DisplayConfig,
+};
 
 pub struct SpiDisplayBuilder;
 
-type SpiDisplay<'a, M> = mipidsi::Display<
-    SpiInterface<'a, ExclusiveDevice<Spi<'a, esp_hal::Blocking>, Output<'a>, NoDelay>, Output<'a>>,
-    M,
-    Output<'a>,
->;
-
-impl<'a> SpiDisplayBuilder {
-    pub fn build<M>(
-        spi_peripheral: AnySpi<'a>,
-        display_config: DisplayConfig<M>,
+impl SpiDisplayBuilder {
+    pub fn build(
+        spi_peripheral: AnySpi<'static>,
+        display_config: DisplayConfig<DisplayModel>,
         buffer: &'static mut [u8],
-    ) -> SpiDisplay<'a, M>
-    where
-        M: mipidsi::models::Model,
-        M::ColorFormat: mipidsi::interface::InterfacePixelFormat<u8>,
-    {
+    ) -> ConcreteDisplay {
         let rst = Output::new(display_config.pins.rst, Level::Low, OutputConfig::default());
 
         let sck = Output::new(display_config.pins.sck, Level::Low, OutputConfig::default());
