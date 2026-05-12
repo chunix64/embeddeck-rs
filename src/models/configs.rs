@@ -1,6 +1,6 @@
 use esp_hal::{
     gpio::AnyPin,
-    peripherals::{LEDC, WIFI},
+    peripherals::{LEDC, LPWR, WIFI},
     spi::master::AnySpi,
 };
 use mipidsi::models::Model;
@@ -10,6 +10,7 @@ pub struct AppPeripherals {
     pub ledc: LEDC<'static>,
     pub spi: AnySpi<'static>,
     pub wifi: WIFI<'static>,
+    pub lpwr: LPWR<'static>,
 }
 
 pub struct DisplayPins {

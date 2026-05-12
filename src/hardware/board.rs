@@ -46,6 +46,7 @@ impl Board {
             ledc: peripherals.LEDC,
             spi: peripherals.SPI2.into(),
             wifi: peripherals.WIFI,
+            lpwr: peripherals.LPWR,
         };
 
         let display_pins = DisplayPins {

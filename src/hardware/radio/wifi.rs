@@ -1,21 +1,17 @@
 use alloc::string::ToString;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
-use esp_hal::peripherals::WIFI;
 use esp_radio::wifi::{Config, PowerSaveMode, WifiController, sta::StationConfig};
 use log::{info, warn};
 
 use crate::models::configs::WifiConfig;
 
 #[embassy_executor::task]
-pub async fn wifi_task(wifi_peripheral: WIFI<'static>, wifi_config: WifiConfig) {
-    if let Ok((mut controller, _interfaces)) =
-        esp_radio::wifi::new(wifi_peripheral, Default::default())
-    {
-        wifi_handle_connection(&mut controller, wifi_config).await;
-    } else {
-        warn!("[WIFI] Can not initialize WiFi!");
-    }
+pub async fn wifi_task(
+    wifi_controller: &'static mut WifiController<'static>,
+    wifi_config: WifiConfig,
+) {
+    wifi_handle_connection(wifi_controller, wifi_config).await;
 }
 
 async fn wifi_handle_connection(

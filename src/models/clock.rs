@@ -1,34 +1,36 @@
-use chrono::{DateTime, TimeZone, Timelike};
+use chrono::{DateTime, TimeZone, Timelike, Utc};
 use chrono_tz::Tz;
-use esp_hal::time::Instant;
+use esp_hal::rtc_cntl::Rtc;
 
 pub struct Clock {
-    base_time: DateTime<Tz>,
-    base_instant: Instant,
     time_zone: Tz,
+    rtc: &'static Rtc<'static>,
 }
 
 impl Clock {
-    pub fn new(base_time: DateTime<Tz>, time_zone: Tz) -> Self {
-        Self {
-            base_time,
-            base_instant: Instant::now(),
-            time_zone,
-        }
+    pub fn new(time_zone: Tz, rtc: &'static Rtc<'static>) -> Self {
+        Self { time_zone, rtc }
     }
 
-    pub fn default() -> Self {
+    pub fn default(rtc: &'static Rtc<'static>) -> Self {
         // Suggest: use release date for each version as default_date
-        let default_date = Tz::UTC.with_ymd_and_hms(2026, 5, 10, 12, 0, 0).unwrap();
+        let default_us = Tz::UTC
+            .with_ymd_and_hms(2026, 5, 10, 12, 0, 0)
+            .unwrap()
+            .timestamp_micros() as u64;
         let time_zone = chrono_tz::UTC;
 
-        Self::new(default_date, time_zone)
+        rtc.set_current_time_us(default_us);
+
+        Self::new(time_zone, rtc)
     }
 
-    pub fn now(&self) -> DateTime<Tz> {
-        let elapsed = Instant::now() - self.base_instant;
-        let elapsed_chrono = chrono::TimeDelta::microseconds(elapsed.as_micros() as i64);
-        (self.base_time + elapsed_chrono).with_timezone(&self.time_zone)
+    fn now(&self) -> DateTime<Tz> {
+        let us = self.rtc.current_time_us() as i64;
+        Utc.timestamp_micros(us)
+            .single()
+            .expect("RTC returned invalid timestamp")
+            .with_timezone(&self.time_zone)
     }
 
     pub fn hour(&self) -> u32 {
