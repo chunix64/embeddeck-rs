@@ -66,7 +66,7 @@ let wifi_config = WifiConfig {
 # Build and flash
 cargo run --release
 
-# Or just build
+# Or build
 cargo build --release
 ```
 
@@ -90,11 +90,12 @@ This runs the same UI code in a terminal using `ratatui`. (ongoing)
 
 ```
 src/
-├── hardware/          # Board, display, backlight, peripherals
+├── hardware/          # Board, display, backlight, peripherals, WiFi
 ├── models/            # Clock, configs
-├── services/          # WiFi, NTP, networking
-├── ui/                # Ratatui screens and rendering
-├── main.rs
+├── services/          # NTP, software services
+├── ui/                # Ratatui UI
+├── main.rs            # Entry point for esp32/embedded
+├── main_desktop.rs    # Entry point for desktop version
 └── lib.rs
 ```
 
@@ -122,7 +123,3 @@ This project is licensed under the MIT License.
 - [Embassy](https://github.com/embassy-rs/embassy)
 - [mipidsi](https://github.com/almindor/mipidsi)
 - [ratatui](https://github.com/ratatui-org/ratatui)
-
----
-
-**Made with ❤️ and Rust on bare metal**

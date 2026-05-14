@@ -1,15 +1,12 @@
-#[cfg(feature = "embedded")]
-use alloc::format;
-
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
-    style::{Style, Stylize},
+    layout::{Constraint, Rect},
+    style::Stylize,
     text::Line,
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Widget},
 };
 
-use crate::models::clock::Clock;
+use crate::{models::clock::Clock, ui::widgets::digital_clock::DigitalClockWidget};
 
 pub struct DefaultUI<'a> {
     clock: &'a Clock,
@@ -24,22 +21,15 @@ impl<'a> DefaultUI<'a> {
 impl Widget for DefaultUI<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Line::from("ESP Clock".bold());
+
         let block = Block::bordered()
             .title(title)
             .border_set(ratatui::symbols::border::THICK);
+        let inner = block.inner(area);
+        let center = inner.centered(Constraint::Fill(1), Constraint::Length(4));
+        block.render(area, buf);
 
-        let clock_text = format!(
-            "{:02}:{:02}:{:02}",
-            self.clock.hour(),
-            self.clock.minute(),
-            self.clock.second()
-        );
-
-        let clock = Paragraph::new(clock_text)
-            .style(Style::default().bold())
-            .centered()
-            .block(block);
-
-        clock.render(area, buf);
+        let digital_clock = DigitalClockWidget::new(self.clock);
+        digital_clock.render(center, buf);
     }
 }

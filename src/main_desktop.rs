@@ -1,5 +1,6 @@
 #![cfg(feature = "desktop")]
 extern crate std;
+extern crate alloc;
 
 mod models;
 mod ui;
