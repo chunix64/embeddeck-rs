@@ -1,8 +1,9 @@
 **ESP Display Clock** (`esp-display-clock-rs`)
 
-A clean, modern embedded Rust clock for ESP32 using the ESP-HAL ecosystem, Embassy, and a color SPI display (ST7789).
+A clean, modern embedded Rust clock based on `Ratatui` for ESP32 using the ESP-HAL ecosystem, Embassy, and a color SPI display.
 
-<img width="1280" height="960" alt="photo_2026-05-10_16-02-20" src="https://github.com/user-attachments/assets/15752a77-8a0a-4f93-97d2-d113571680e7" />
+<img width="1280" height="960" alt="photo_2026-05-14_09-29-52" src="https://github.com/user-attachments/assets/f49d334e-44d5-4c9e-965e-0d795910060a" />
+
 
 ## Features
 
@@ -108,6 +109,7 @@ src/
 - Touch support
 - More screens support
 - Sync between desktop version and embedded version
+- Improve the RTC clock accuracy (currently 5000+ ppm drift)
 
 ## Contributing
 
