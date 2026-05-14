@@ -75,6 +75,7 @@ pub async fn ntp_task(network_stack: embassy_net::Stack<'static>, rtc: &'static 
     let ntp_address: SocketAddr = SocketAddr::new(
         match ntp_addresses[0] {
             embassy_net::IpAddress::Ipv4(address) => IpAddr::V4(address),
+            embassy_net::IpAddress::Ipv6(address) => IpAddr::V6(address),
         },
         123,
     );

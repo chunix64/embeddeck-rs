@@ -883,6 +883,7 @@ dependencies = [
  "log",
  "mipidsi",
  "mousefood",
+ "nanofish",
  "ratatui",
  "sntpc",
  "sntpc-net-embassy",
@@ -1590,6 +1591,18 @@ dependencies = [
  "embedded-graphics-unicodefonts",
  "ratatui-core",
  "thiserror",
+]
+
+[[package]]
+name = "nanofish"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f472f1008882b4b1218af6af055e1c52e58355456525b6ba4e8af897e9492ed"
+dependencies = [
+ "embassy-net",
+ "embassy-time",
+ "embedded-io-async 0.7.0",
+ "heapless 0.9.3",
 ]
 
 [[package]]

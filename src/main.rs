@@ -36,8 +36,9 @@ use crate::hardware::display::spi_display::SpiDisplayBuilder;
 use crate::hardware::radio::wifi::{init_network_stack, wifi_task};
 use crate::models::clock::Clock;
 use crate::models::configs::WifiConfig;
-use crate::services::embassy_net::embassy_net_task;
+use crate::services::embassy_net::{net_monitor_task, net_runner_task};
 use crate::services::ntp::ntp_task;
+use crate::services::webserver::webserver_task;
 
 static WIFI_CONTROLLER: StaticCell<WifiController<'static>> = StaticCell::new();
 static RTC: StaticCell<Rtc<'static>> = StaticCell::new();
@@ -91,8 +92,10 @@ async fn main(spawner: Spawner) -> ! {
 
     // --- Spawn Tasks ---
     spawner.spawn(wifi_task(wifi_controller, wifi_config).unwrap());
-    spawner.spawn(embassy_net_task(network_runner).unwrap());
+    spawner.spawn(net_runner_task(network_runner).unwrap());
+    spawner.spawn(net_monitor_task(network_stack).unwrap());
     spawner.spawn(ntp_task(network_stack, rtc).unwrap());
+    spawner.spawn(webserver_task(network_stack).unwrap());
     spawner.spawn(app_task(spawner, display_controller, clock).unwrap());
 
     loop {

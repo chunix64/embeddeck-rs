@@ -8,17 +8,17 @@ use ratatui::{
 
 use crate::{models::clock::Clock, ui::widgets::digital_clock::DigitalClockWidget};
 
-pub struct DefaultUI<'a> {
+pub struct DefaultScreen<'a> {
     clock: &'a Clock,
 }
 
-impl<'a> DefaultUI<'a> {
+impl<'a> DefaultScreen<'a> {
     pub fn new(clock: &'a Clock) -> Self {
         Self { clock }
     }
 }
 
-impl Widget for DefaultUI<'_> {
+impl Widget for DefaultScreen<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Line::from("ESP Clock".bold());
 
