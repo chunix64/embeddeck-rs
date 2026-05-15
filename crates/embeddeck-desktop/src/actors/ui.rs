@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use crate::models::clock::DesktopClock;
 
-pub fn ui_task(terminal: &mut DefaultTerminal, clock: &DesktopClock) -> std::io::Result<()> {
+pub fn ui_actor(terminal: &mut DefaultTerminal, clock: &DesktopClock) -> std::io::Result<()> {
     let tick_rate = Duration::from_millis(500);
 
     loop {
