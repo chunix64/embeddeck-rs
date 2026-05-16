@@ -23,7 +23,7 @@ impl<'a, S: ClockSource> DefaultScreen<'a, S> {
 
 impl<S: ClockSource> Widget for DefaultScreen<'_, S> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let title = Line::from("ESP Clock".bold());
+        let title = Line::from("Embeddeck-rs".bold());
 
         let block = Block::bordered()
             .title(title)

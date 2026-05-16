@@ -91,6 +91,8 @@ cd embeddeck-rs
 
 ### 2. Configure WiFi
 
+- Optional, but required for network-related tasks such as NTP.
+
 Edit `crates/embeddeck-embedded/src/main.rs`:
 
 ```rust
