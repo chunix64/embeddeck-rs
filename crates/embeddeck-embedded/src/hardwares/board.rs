@@ -4,7 +4,7 @@ use esp_hal::{
 };
 
 use crate::{
-    hardware::display::types::{DisplayModel, display_model},
+    hardwares::display::types::{DisplayModel, display_model},
     models::configs::{AppPeripherals, BacklightConfig, DisplayConfig, DisplayPins},
 };
 

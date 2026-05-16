@@ -4,7 +4,7 @@ use embedded_graphics::{
 };
 use mipidsi::options::{Orientation, Rotation};
 
-use crate::hardware::{backlight::ledc::BacklightController, display::types::ConcreteDisplay};
+use crate::hardwares::{backlight::ledc::BacklightController, display::types::ConcreteDisplay};
 
 pub struct DisplayController {
     display: ConcreteDisplay,

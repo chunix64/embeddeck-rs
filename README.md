@@ -29,7 +29,7 @@ Tested with:
 - 240×320 ST7789 SPI IPS display
 - Backlight connected to a PWM-capable GPIO
 
-Default pinout (defined in `crates/embeddeck-embedded/src/hardware/board.rs`):
+Default pinout (defined in `crates/embeddeck-embedded/src/hardwares/board.rs`):
 
 | Function    | GPIO |
 |-------------|------|
@@ -42,45 +42,12 @@ Default pinout (defined in `crates/embeddeck-embedded/src/hardware/board.rs`):
 
 Pins can be changed by editing the board configuration.
 
-Other display drivers supported by `mipidsi` (ILI9341, ILI9486, SSD1351, etc.) can be wired in with minimal changes at `crates/embeddeck-embedded/src/hardware/display/types.rs`.
+Other display drivers supported by `mipidsi` (ILI9341, ILI9486, SSD1351, etc.) can be wired in with minimal changes at `crates/embeddeck-embedded/src/hardwares/display/types.rs`.
 
 ## Prerequisites
 
 - `rustc`: 1.91+
 - Xtensa toolchain for embedded targets: install via [`espup`](https://github.com/esp-rs/espup)
-
-## Project Structure
-
-Cargo workspace split into three crates:
-
-```
-crates/
-├── embeddeck-core/        # Shared models, functions, etc
-│   └── src/
-│       └── models/        # Shared models
-│
-├── embeddeck-ui/          # Shared UI library
-│   └── src/
-│       ├── models/        # UI-specific models
-│       ├── screens/       # Screen definitions
-│       └── widgets/       # Ratatui widgets
-│
-├── embeddeck-embedded/    # ESP32 embedded target
-│   └── src/
-│       ├── hardware/      # Board, display (SPI), backlight (LEDC), WiFi
-│       ├── models/        # Embedded-specific models and configs
-│       ├── services/      # NTP, web server, network services
-│       ├── actors/        # Async actor tasks
-│       └── main.rs
-│
-└── embeddeck-desktop/     # Desktop simulator target
-    └── src/
-        ├── actors/        # Desktop actor tasks
-        ├── models/        # Desktop-specific models
-        └── main.rs
-```
-
-`embeddeck-ui` and `embeddeck-core` are shared between both targets.
 
 ## Quick Start
 
@@ -137,6 +104,39 @@ cargo run --release
 - [ ] Deep sleep / low power modes
 - [ ] Touch support
 - [ ] Broader display driver support (ILI9341, SSD1351, etc.)
+
+## Project Structure
+
+Cargo workspace split into three crates:
+
+```
+crates/
+├── embeddeck-core/        # Shared models, functions, etc
+│   └── src/
+│       └── models/        # Shared models
+│
+├── embeddeck-ui/          # Shared UI library
+│   └── src/
+│       ├── models/        # UI-specific models
+│       ├── screens/       # Screen definitions
+│       └── widgets/       # Ratatui widgets
+│
+├── embeddeck-embedded/    # ESP32 embedded target
+│   └── src/
+│       ├── hardwares/      # Board, display (SPI), backlight (LEDC), WiFi
+│       ├── models/        # Embedded-specific models and configs
+│       ├── services/      # NTP, web server, network services
+│       ├── actors/        # Async actor tasks
+│       └── main.rs
+│
+└── embeddeck-desktop/     # Desktop simulator target
+    └── src/
+        ├── actors/        # Desktop actor tasks
+        ├── models/        # Desktop-specific models
+        └── main.rs
+```
+
+`embeddeck-ui` and `embeddeck-core` are shared between both targets.
 
 ## Contributing
 

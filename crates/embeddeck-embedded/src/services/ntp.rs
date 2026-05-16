@@ -1,6 +1,5 @@
 use core::net::{IpAddr, SocketAddr};
 
-use anyhow::Result;
 use embassy_net::udp::{PacketMetadata, UdpSocket};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
@@ -44,27 +43,29 @@ impl NtpTimestampGenerator for NtpTimeStamp<'_> {
 pub async fn ntp_service(network_stack: embassy_net::Stack<'static>, rtc: &'static Rtc<'static>) {
     // Retry if errors occur
     loop {
-        if let Err(error) = ntp_handler(network_stack, rtc).await {
-            warn!("[NTP] Service failed, retry: {:?}", error);
-        }
+        ntp_handler(network_stack, rtc).await;
     }
 }
 
-async fn ntp_handler(
-    network_stack: embassy_net::Stack<'static>,
-    rtc: &'static Rtc<'static>,
-) -> Result<()> {
+async fn ntp_handler(network_stack: embassy_net::Stack<'static>, rtc: &'static Rtc<'static>) {
     network_stack.wait_config_up().await;
 
     let interval = 1024 * 1000; // 1024 seconds = 17 minutes
 
-    let ntp_addresses = network_stack
+    let ntp_addresses = match network_stack
         .dns_query(NTP_SERVER, embassy_net::dns::DnsQueryType::A)
         .await
-        .map_err(|e| anyhow::anyhow!("[NTP] DNS query failed: {:?}", e))?;
+    {
+        Ok(addresses) => addresses,
+        Err(error) => {
+            warn!("[NTP] DNS query failed: {:?}", error);
+            return;
+        }
+    };
 
     if ntp_addresses.is_empty() {
-        return Err(anyhow::anyhow!("[NTP] Can not get the ntp address!"));
+        warn!("[NTP] Can not get the ntp address!");
+        return;
     }
 
     let mut rx_meta = [PacketMetadata::EMPTY; 16];
@@ -82,9 +83,10 @@ async fn ntp_handler(
 
     let ntp_port = 123;
 
-    socket
-        .bind(ntp_port)
-        .map_err(|e| anyhow::anyhow!("[NTP] Socket binding failed: {:?}", e))?;
+    if let Err(error) = socket.bind(ntp_port) {
+        warn!("[NTP] Socket binding failed: {:?}", error);
+        return;
+    }
 
     let socket = UdpSocketWrapper::new(socket);
 

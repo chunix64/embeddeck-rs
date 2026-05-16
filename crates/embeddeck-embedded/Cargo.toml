@@ -14,7 +14,8 @@ default = []
 [dependencies]
 # --- Shared (from workspace) ---
 heapless     = { workspace = true }
-anyhow       = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
 chrono       = { workspace = true }
 chrono-tz    = { workspace = true }
 ratatui      = { workspace = true }
@@ -35,6 +36,7 @@ esp-radio               = { version = "0.18.0", default-features = false, featur
 embedded-hal            = "1.0.0"
 embedded-hal-async      = "1.0.0"
 embedded-hal-bus        = "0.3.0"
+embassy-sync = "0.8.0"
 embedded-graphics       = "0.8.2"
 
 embassy-executor        = "0.10.0"

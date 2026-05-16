@@ -19,7 +19,8 @@ extern crate alloc;
 
 mod actors;
 mod app;
-mod hardware;
+mod hardwares;
+mod helpers;
 mod models;
 mod services;
 
@@ -31,13 +32,13 @@ use esp_radio::wifi::WifiController;
 use static_cell::StaticCell;
 
 use crate::app::app_task;
-use crate::hardware::backlight::ledc::Backlight;
-use crate::hardware::board::Board;
-use crate::hardware::display::display_controller::DisplayController;
-use crate::hardware::display::spi_display::SpiDisplayBuilder;
-use crate::hardware::radio::wifi::wifi_task;
-use crate::models::clock::{EmbeddedClock, EmbeddedClockExt};
+use crate::hardwares::backlight::ledc::Backlight;
+use crate::hardwares::board::Board;
+use crate::hardwares::display::display_controller::DisplayController;
+use crate::hardwares::display::spi_display::SpiDisplayBuilder;
+use crate::hardwares::radio::wifi::wifi_task;
 use crate::models::configs::WifiConfig;
+use crate::models::state::AppState;
 use crate::services::debug::debug_service;
 use crate::services::network::{init_network_stack, net_monitor_service, net_runner_service};
 use crate::services::ntp::ntp_service;
@@ -46,12 +47,13 @@ use crate::services::webserver::webserver_service;
 
 static WIFI_CONTROLLER: StaticCell<WifiController<'static>> = StaticCell::new();
 static RTC: StaticCell<Rtc<'static>> = StaticCell::new();
-static CLOCK: StaticCell<EmbeddedClock> = StaticCell::new();
 
 const DISPLAY_BUFFER_SIZE: usize = 1024;
 static DISPLAY_BUFFER: StaticCell<[u8; DISPLAY_BUFFER_SIZE]> = StaticCell::new();
 static DISPLAY_CONTROLLER: StaticCell<DisplayController> = StaticCell::new();
 static BACKLIGHT: StaticCell<Backlight> = StaticCell::new();
+
+static APP_STATE: StaticCell<AppState> = StaticCell::new();
 
 //
 // Pin assignments and peripheral configuration can be changed in src/hardware/board.rs
@@ -63,7 +65,6 @@ async fn main(spawner: Spawner) -> ! {
     // --- Board & RTC ---
     let board = Board::init();
     let rtc: &'static Rtc<'static> = RTC.init(Rtc::new(board.app_peripherals.lpwr));
-    let clock: &'static EmbeddedClock = CLOCK.init(EmbeddedClock::default(rtc));
 
     // --- WiFi & Network ---
     let (wifi_controller_inner, wifi_interfaces) =
@@ -88,6 +89,9 @@ async fn main(spawner: Spawner) -> ! {
     let display_controller =
         DISPLAY_CONTROLLER.init(DisplayController::new(display, Some(backlight_controller)));
 
+    // --- App ---
+    let app_state = APP_STATE.init(AppState::init(rtc).await);
+
     // --- Config ---
     let wifi_config = WifiConfig {
         ssid: heapless::String::try_from("YOUR_SSID").unwrap(),
@@ -102,11 +106,11 @@ async fn main(spawner: Spawner) -> ! {
     spawner.spawn(net_monitor_service(network_stack).unwrap());
     spawner.spawn(ntp_service(network_stack, rtc).unwrap());
     spawner.spawn(webserver_service(network_stack).unwrap());
-    spawner.spawn(weather_service(network_stack).unwrap());
+    spawner.spawn(weather_service(network_stack, app_state).unwrap());
     spawner.spawn(debug_service().unwrap());
 
     // --- Spawn main logic ---
-    spawner.spawn(app_task(spawner, display_controller, clock).unwrap());
+    spawner.spawn(app_task(spawner, display_controller, app_state).unwrap());
 
     loop {
         // Yield to other tasks, doing nothing

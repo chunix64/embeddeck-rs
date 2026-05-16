@@ -15,7 +15,8 @@ resolver = "2"
 [workspace.dependencies]
 # --- Shared libraries ---
 heapless = "0.9.3"
-anyhow = { version = "1.0.102", default-features = false }
+serde = { version = "1.0.228", default-features = false }
+serde_json = { version = "1.0.149", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4.44", default-features = false }
 chrono-tz = { version = "0.10.4", default-features = false }
 ratatui = { version = "0.30.0", default-features = false }

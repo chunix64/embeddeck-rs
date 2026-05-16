@@ -6,7 +6,7 @@ use esp_hal::{
 use mipidsi::{interface::SpiInterface, options::Rotation};
 
 use crate::{
-    hardware::display::types::{ConcreteDisplay, DisplayModel},
+    hardwares::display::types::{ConcreteDisplay, DisplayModel},
     models::configs::DisplayConfig,
 };
 
