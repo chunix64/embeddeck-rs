@@ -1,6 +1,6 @@
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
-use embeddeck_core::models::weather::Weather;
+use embeddeck_core::models::{geo_location::GeoLocation, weather::Weather};
 use esp_hal::rtc_cntl::Rtc;
 use static_cell::StaticCell;
 
@@ -12,6 +12,12 @@ static WEATHER: Mutex<CriticalSectionRawMutex, Option<Weather>> = Mutex::new(Non
 pub struct AppState {
     pub clock: &'static EmbeddedClock,
     pub weather: &'static Mutex<CriticalSectionRawMutex, Option<Weather>>,
+    pub config: ConfigState,
+}
+
+#[derive(Default)]
+pub struct ConfigState {
+    pub geo_location: Option<GeoLocation>,
 }
 
 impl AppState {
@@ -21,6 +27,7 @@ impl AppState {
         Self {
             clock: CLOCK.init(EmbeddedClock::default(rtc)),
             weather: &WEATHER,
+            config: ConfigState::default(),
         }
     }
 }

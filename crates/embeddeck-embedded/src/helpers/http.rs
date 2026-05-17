@@ -9,7 +9,7 @@ pub fn unchunk(chunked: &str) -> &str {
         }
 
         // Fallback
-        return chunked[start..].trim_end_matches(|c: char| c == '\r' || c == '\n');
+        return chunked[start..].trim_end_matches(['\r', '\n']);
     }
 
     chunked

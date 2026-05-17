@@ -26,6 +26,7 @@ mod services;
 
 use embassy_executor::Spawner;
 use embassy_time::Delay;
+use embeddeck_core::models::geo_location::GeoLocation;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::rtc_cntl::Rtc;
 use esp_radio::wifi::WifiController;
@@ -38,7 +39,7 @@ use crate::hardwares::display::display_controller::DisplayController;
 use crate::hardwares::display::spi_display::SpiDisplayBuilder;
 use crate::hardwares::radio::wifi::wifi_task;
 use crate::models::configs::WifiConfig;
-use crate::models::state::AppState;
+use crate::models::states::AppState;
 use crate::services::debug::debug_service;
 use crate::services::network::{init_network_stack, net_monitor_service, net_runner_service};
 use crate::services::ntp::ntp_service;
@@ -56,7 +57,7 @@ static BACKLIGHT: StaticCell<Backlight> = StaticCell::new();
 static APP_STATE: StaticCell<AppState> = StaticCell::new();
 
 //
-// Pin assignments and peripheral configuration can be changed in src/hardware/board.rs
+// Pin assignments and peripheral configuration can be changed in src/hardwares/board.rs
 //
 
 #[allow(clippy::large_stack_frames)]
@@ -89,14 +90,21 @@ async fn main(spawner: Spawner) -> ! {
     let display_controller =
         DISPLAY_CONTROLLER.init(DisplayController::new(display, Some(backlight_controller)));
 
-    // --- App ---
-    let app_state = APP_STATE.init(AppState::init(rtc).await);
-
     // --- Config ---
     let wifi_config = WifiConfig {
         ssid: heapless::String::try_from("YOUR_SSID").unwrap(),
         password: heapless::String::try_from("YOUR_SSID_PASSWORD").unwrap(),
     };
+
+    let geo_location = GeoLocation {
+        latitude: 17.05,
+        longitude: 20.26,
+        city_name: heapless::String::try_from("Chunix64's land").ok(),
+    };
+
+    // --- App state---
+    let app_state = APP_STATE.init(AppState::init(rtc).await);
+    app_state.config.geo_location = Some(geo_location);
 
     // --- Spawn hardware Tasks ---
     spawner.spawn(wifi_task(wifi_controller, wifi_config).unwrap());

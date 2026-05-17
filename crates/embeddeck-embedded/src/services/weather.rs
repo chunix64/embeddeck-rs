@@ -1,14 +1,17 @@
+use core::fmt::Write;
+
 use embassy_time::Delay;
-use embeddeck_core::models::{units::Temperature, weather::Weather};
+use embeddeck_core::models::{geo_location::GeoLocation, units::Temperature, weather::Weather};
 use embedded_hal_async::delay::DelayNs;
+use heapless::String;
 use log::warn;
 use nanofish::{HttpHeader, ResponseBody, SmallHttpClient, mime_types};
 use static_cell::StaticCell;
 
-use crate::{helpers::http::unchunk, models::state::AppState};
+use crate::{helpers::http::unchunk, models::states::AppState};
 
 // TODO: Implement
-const WEATHER_URL: &str = "http://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,relative_humidity_2m,apparent_temperature";
+const WEATHER_BASE_URL: &str = "api.open-meteo.com/v1/forecast";
 
 static RESPONSE_BUFFER: StaticCell<[u8; 1024]> = StaticCell::new();
 
@@ -30,7 +33,10 @@ pub async fn weather_service(
     ];
 
     loop {
-        if let Some(weather) = fetch_weather(&client, &mut headers, response_buffer).await {
+        if let Some(geo_location) = &app_state.config.geo_location
+            && let Some(weather) =
+                fetch_weather(&client, &mut headers, response_buffer, geo_location).await
+        {
             let mut guard = app_state.weather.lock().await;
             *guard = Some(weather);
         } else {
@@ -44,8 +50,18 @@ async fn fetch_weather(
     client: &SmallHttpClient<'_>,
     headers: &mut [HttpHeader<'_>],
     response_buffer: &mut [u8],
+    geo_location: &GeoLocation,
 ) -> Option<Weather> {
-    let (response, _bytes_read) = match client.get(WEATHER_URL, headers, response_buffer).await {
+    let mut weather_url: String<256> = String::new();
+    write!(
+        weather_url,
+        "http://{}?latitude={:.4}&longitude={:.4}\
+        &current=temperature_2m,relative_humidity_2m,apparent_temperature",
+        WEATHER_BASE_URL, geo_location.latitude, geo_location.longitude,
+    )
+    .ok()?;
+
+    let (response, _bytes_read) = match client.get(&weather_url, headers, response_buffer).await {
         Ok(result) => result,
         Err(error) => {
             warn!("[WEATHER] HTTP fetch failed: {:?}", error);
@@ -81,7 +97,6 @@ async fn fetch_weather(
         .map(|value| value as u8);
 
     Some(Weather {
-        geo_location: None,
         temperature,
         apparent_temperature,
         relative_humidity,

@@ -4,7 +4,7 @@ use embedded_hal_async::delay::DelayNs;
 use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
 use ratatui::{Frame, Terminal};
 
-use crate::{hardwares::display::display_controller::DisplayController, models::state::AppState};
+use crate::{hardwares::display::display_controller::DisplayController, models::states::AppState};
 
 #[embassy_executor::task]
 pub async fn ui_actor(display: &'static mut DisplayController, app_state: &'static AppState) {

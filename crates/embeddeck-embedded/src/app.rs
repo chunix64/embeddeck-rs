@@ -2,7 +2,7 @@ use embassy_executor::Spawner;
 
 use crate::actors::ui::ui_actor;
 use crate::hardwares::display::display_controller::DisplayController;
-use crate::models::state::AppState;
+use crate::models::states::AppState;
 
 #[embassy_executor::task]
 pub async fn app_task(
