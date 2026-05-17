@@ -8,10 +8,9 @@ use static_cell::StaticCell;
 use crate::{helpers::http::unchunk, models::state::AppState};
 
 // TODO: Implement
-const WEATHER_URL: &str =
-    "http://api.open-meteo.com/v1/forecast?latitude=1.35&longitude=103.81&current=temperature_2m";
+const WEATHER_URL: &str = "http://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,relative_humidity_2m,apparent_temperature";
 
-static RESPONSE_BUFFER: StaticCell<[u8; 512]> = StaticCell::new();
+static RESPONSE_BUFFER: StaticCell<[u8; 1024]> = StaticCell::new();
 
 #[embassy_executor::task]
 pub async fn weather_service(
@@ -23,7 +22,7 @@ pub async fn weather_service(
     let interval = 60000; // 1 minute
 
     let client = SmallHttpClient::new(&network_stack);
-    let response_buffer = RESPONSE_BUFFER.init([0u8; 512]);
+    let response_buffer = RESPONSE_BUFFER.init([0u8; 1024]);
     let mut headers = [
         HttpHeader::user_agent("Embeddeck/0.1.0"),
         HttpHeader::content_type(mime_types::JSON),
@@ -58,11 +57,7 @@ async fn fetch_weather(
         ResponseBody::Text(json) => match serde_json::from_str(unchunk(json)) {
             Ok(json_data) => json_data,
             Err(error) => {
-                log::debug!(
-                    "[DEBUG] the http request is unclean because of Transfer-Encoding: chunked: {:?}",
-                    json
-                );
-                warn!("[WEATHER] Parse JSON failed: {:?}", error);
+                warn!("[WEATHER] Parse JSON failed: {:?}", error,);
                 return None;
             }
         },
@@ -77,11 +72,18 @@ async fn fetch_weather(
     };
 
     let current = &json_data["current"];
+    let temperature = current["temperature_2m"].as_f64().map(Temperature::celsius);
+    let apparent_temperature = current["apparent_temperature"]
+        .as_f64()
+        .map(Temperature::celsius);
+    let relative_humidity = current["relative_humidity_2m"]
+        .as_u64()
+        .map(|value| value as u8);
 
     Some(Weather {
-        geo_location: heapless::String::new(),
-        temperature: Temperature::celsius(current["temperature_2m"].as_f64()?),
-        apparent_temperature: Temperature::celsius(current["apparent_temperature"].as_f64()?),
-        relative_humidity: current["relative_humidity_2m"].as_u64()? as u8,
+        geo_location: None,
+        temperature,
+        apparent_temperature,
+        relative_humidity,
     })
 }

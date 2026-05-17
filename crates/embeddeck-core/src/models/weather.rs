@@ -2,20 +2,10 @@ use heapless::String;
 
 use crate::models::units::Temperature;
 
+#[derive(Default)]
 pub struct Weather {
-    pub geo_location: String<32>,
-    pub temperature: Temperature,
-    pub apparent_temperature: Temperature,
-    pub relative_humidity: u8,
-}
-
-impl Default for Weather {
-    fn default() -> Self {
-        Self {
-            geo_location: heapless::String::new(),
-            temperature: Temperature::Celsius(f32::NAN),
-            apparent_temperature: Temperature::Celsius(f32::NAN),
-            relative_humidity: 255,
-        }
-    }
+    pub geo_location: Option<String<32>>,
+    pub temperature: Option<Temperature>,
+    pub apparent_temperature: Option<Temperature>,
+    pub relative_humidity: Option<u8>,
 }
