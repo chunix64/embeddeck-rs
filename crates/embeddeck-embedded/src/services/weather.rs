@@ -8,7 +8,7 @@ use log::warn;
 use nanofish::{HttpHeader, ResponseBody, SmallHttpClient, mime_types};
 use static_cell::StaticCell;
 
-use crate::{helpers::http::unchunk, models::states::AppState};
+use crate::models::states::AppState;
 
 // TODO: Implement
 const WEATHER_BASE_URL: &str = "api.open-meteo.com/v1/forecast";
@@ -70,7 +70,7 @@ async fn fetch_weather(
     };
 
     let json_data: serde_json::Value = match &response.body {
-        ResponseBody::Text(json) => match serde_json::from_str(unchunk(json)) {
+        ResponseBody::Text(json) => match serde_json::from_str(json) {
             Ok(json_data) => json_data,
             Err(error) => {
                 warn!("[WEATHER] Parse JSON failed: {:?}", error,);
